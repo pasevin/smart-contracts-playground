@@ -6,7 +6,7 @@ coverage.json
 typechain
 #Hardhat files
 cache
-artifacts
+# artifacts
 typechain-types
 .DS_Store
 /data
