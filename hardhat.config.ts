@@ -10,6 +10,8 @@ import { removeConsoleLog } from "hardhat-preprocessor";
 import "@openzeppelin/hardhat-upgrades";
 require("hardhat-abi-exporter");
 require("./scripts/deploy.ts");
+require("./scripts/verify.ts");
+require("./scripts/upgrade-prepare.ts");
 
 dotenv.config();
 
@@ -27,7 +29,28 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 module.exports = {
-  solidity: "0.8.4",
+  solidity: {
+    compilers: [
+      {
+        version: "0.8.0",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+    ],
+  },
   networks: {
     goerli: {
       url: process.env.GOERLI_URL || "",

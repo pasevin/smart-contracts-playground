@@ -1,24 +1,18 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ethers, network, run, upgrades } from "hardhat";
+import { task } from "hardhat/config";
 import { NomicLabsHardhatPluginError } from "hardhat/plugins";
-import { requirementsGuard } from "./helpers/helpers";
-import * as manifestGoerli from "../.openzeppelin/goerli.json";
+import { TaskArguments } from "hardhat/types";
 
-async function main() {
-  const signers = await ethers.getSigners();
-  let deployer: SignerWithAddress | undefined;
-  // Basic setup guards...
-  [deployer] = requirementsGuard(signers, network);
-
-  if (network.name === "goerli" || network.name === "mainnet") {
-    const proxyAddr = manifestGoerli.proxies[0].address;
-    const impl = await upgrades.erc1967.getImplementationAddress(proxyAddr);
-    /* -------------------------------------------------------------------------- */
-    /*                                VERIFICATION                                */
-    /* -------------------------------------------------------------------------- */
-
+task("_verify:UpgradeERC20Transparent")
+  .addParam(
+    "proxyAddress",
+    "Proxy Address of the contract to verify. Get it from the manifest."
+  )
+  .setAction(async function (taskArgs: TaskArguments, { upgrades, run }) {
+    // const proxyAddr = manifestGoerli.proxies[0].address;
+    const impl = await upgrades.erc1967.getImplementationAddress(
+      taskArgs.proxyAddress
+    );
     console.log(">>>>>>>>>>>> Verification >>>>>>>>>>>>");
-
     try {
       // Verify
       console.log("Verifying: ", impl);
@@ -35,12 +29,58 @@ async function main() {
         console.error(error);
       }
     }
-  }
-}
+  });
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+task("_verify:UpgradeERC20UUPS")
+  .addParam(
+    "proxyAddress",
+    "Proxy Address of the contract to verify. Get it from the manifest."
+  )
+  .setAction(async function (taskArgs: TaskArguments, { upgrades, run }) {
+    // const proxyAddr = manifestGoerli.proxies[0].address;
+    const impl = await upgrades.erc1967.getImplementationAddress(
+      taskArgs.proxyAddress
+    );
+    console.log(">>>>>>>>>>>> Verification >>>>>>>>>>>>");
+    try {
+      // Verify
+      console.log("Verifying: ", impl);
+      await run("verify:verify", {
+        address: impl,
+      });
+    } catch (error) {
+      if (
+        error instanceof NomicLabsHardhatPluginError &&
+        error.message.includes("Reason: Already Verified")
+      ) {
+        console.log("Already verified, skipping...");
+      } else {
+        console.error(error);
+      }
+    }
+  });
+
+task("_verify:any")
+  .addParam(
+    "address",
+    "Address of the contract to verify. Get it from the manifest."
+  )
+  .setAction(async function (taskArgs: TaskArguments, { upgrades, run }) {
+    console.log(">>>>>>>>>>>> Verification >>>>>>>>>>>>");
+    try {
+      // Verify
+      console.log("Verifying: ", taskArgs.address);
+      await run("verify:verify", {
+        address: taskArgs.address,
+      });
+    } catch (error) {
+      if (
+        error instanceof NomicLabsHardhatPluginError &&
+        error.message.includes("Reason: Already Verified")
+      ) {
+        console.log("Already verified, skipping...");
+      } else {
+        console.error(error);
+      }
+    }
+  });
